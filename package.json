@@ -2,8 +2,23 @@
   "name": "scroll-detector",
   "version": "0.1.0",
   "description": "detect scroll direction, position and others",
-  "main": "index.js",
-  "scripts": {},
+  "main": "dist/scroll-detector.js",
+  "jsnext:main": "dist/scroll-detector.module.js",
+  "module": "dist/scroll-detector.module.js",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "1.6.1",
+    "rollup": "^0.50.0",
+    "rollup-plugin-babel": "3.0.2",
+    "rollup-watch": "^4.3.1",
+    "uglify-js": "^3.1.5"
+  },
+  "scripts": {
+    "dev": "npm run watch",
+    "watch": "rollup --config --watch",
+    "build": "rollup --config",
+    "release": "rollup --config && uglifyjs dist/scroll-detector.js -cm --preamble \"/*!\n * scroll-detector\n * https://github.com/yomotsu/scroll-detector\n * (c) 2017 @yomotsu\n * Released under the MIT License.\n */\" > dist/scroll-detector.min.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yomotsu/scroll-detector.git"
