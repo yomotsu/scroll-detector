@@ -1,0 +1,21 @@
+{
+  "name": "scroll-detector",
+  "version": "0.0.0",
+  "description": "detect scroll direction, position and others",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yomotsu/scroll-detector.git"
+  },
+  "keywords": [
+    "scroll"
+  ],
+  "author": "yomotsu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yomotsu/scroll-detector/issues"
+  },
+  "homepage": "https://github.com/yomotsu/scroll-detector#readme"
+}
