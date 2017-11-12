@@ -5,19 +5,19 @@
 [![Latest NPM release](https://img.shields.io/npm/v/scroll-detector.svg)](https://www.npmjs.com/package/scroll-detector)
 ![MIT License](https://img.shields.io/npm/l/scroll-detector.svg)
 
-## demos
+## Example
 
 - [basic](https://yomotsu.github.io/scroll-detector/examples/basic.html)
 
 ## Usage
 
-```
+```shell
 $ npm install --save scroll-detector
 ```
 
 then
 
-```
+```javascript
 import scrollDetector from 'scroll-detector';
 
 scrollDetector.on( 'scroll', () => {
@@ -41,8 +41,9 @@ scrollDetector.on( 'at:bottom', () => {
 } );
 ```
 
-## other features
+## Other features
 
+- `scrollDetector.off( eventName, func )` to remove the listener.
 - `scrollDetector.getScrollTop()` will return scrollTop amount in pixels.
 - `scrollDetector.mute()` to disabled the detector.
 - `scrollDetector.unmute()` to re-enable the detector.
