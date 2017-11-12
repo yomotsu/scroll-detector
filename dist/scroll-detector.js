@@ -7,7 +7,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	(global.cameraControlsFactory = factory());
+	(global.scrollDetector = factory());
 }(this, (function () { 'use strict';
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -121,7 +121,7 @@
 	var ENUM_AT_TOP = 0;
 	var ENUM_AT_BOTTOM = 1;
 
-	var scrollWatcher = new EventEmitter();
+	var scrollDetector = new EventEmitter();
 	var html = document.documentElement;
 	var body = document.body;
 
@@ -135,18 +135,18 @@
 	var eventFired = false;
 
 	// mute中はイベントをエミットしない
-	scrollWatcher.mute = function () {
+	scrollDetector.mute = function () {
 
 		isMuted = true;
 	};
 
-	scrollWatcher.unmute = function () {
+	scrollDetector.unmute = function () {
 
 		lastScrollY = getScrollY();
 		isMuted = false;
 	};
 
-	scrollWatcher.getScrollTop = function () {
+	scrollDetector.getScrollTop = function () {
 		return scrollY;
 	};
 
@@ -163,7 +163,7 @@
 
 			lastScrollY = scrollY;
 			directionStartY = lastScrollY;
-			scrollWatcher.emit({ type: 'scroll' });
+			scrollDetector.emit({ type: 'scroll' });
 			return;
 		}
 
@@ -184,13 +184,13 @@
 			return;
 		}
 
-		scrollWatcher.emit({ type: 'scroll' });
+		scrollDetector.emit({ type: 'scroll' });
 
 		if (isPageTop) {
 
 			if (previousAt !== ENUM_AT_TOP) {
 
-				scrollWatcher.emit({ type: 'at:top' });
+				scrollDetector.emit({ type: 'at:top' });
 				previousAt = ENUM_AT_TOP;
 			}
 
@@ -202,7 +202,7 @@
 
 			if (previousAt !== ENUM_AT_BOTTOM) {
 
-				scrollWatcher.emit({ type: 'at:bottom' });
+				scrollDetector.emit({ type: 'at:bottom' });
 				previousAt = ENUM_AT_BOTTOM;
 			}
 
@@ -229,31 +229,31 @@
 		lastScrollY = scrollY;
 		var isDirectionChanged = isUpScrollPrev !== isUpScroll;
 
-		if (isUpScroll) scrollWatcher.emit({ type: 'scroll:up' });
-		if (!isUpScroll) scrollWatcher.emit({ type: 'scroll:down' });
+		if (isUpScroll) scrollDetector.emit({ type: 'scroll:up' });
+		if (!isUpScroll) scrollDetector.emit({ type: 'scroll:down' });
 
 		if (isDirectionChanged) {
 
 			directionStartY = scrollY;
 			eventFired = false;
 
-			if (!isUpScroll) scrollWatcher.emit({ type: 'change:down' });
+			if (!isUpScroll) scrollDetector.emit({ type: 'change:down' });
 		}
 
 		if (!eventFired && Math.abs(directionStartY - scrollY) >= THRESHOLD) {
 
 			eventFired = true;
 
-			if (isUpScroll) scrollWatcher.emit({ type: 'delay:up' });
-			// if ( ! isUpScroll ) scrollWatcher.emit( { type: 'delay:down' } );
+			if (isUpScroll) scrollDetector.emit({ type: 'delay:up' });
+			// if ( ! isUpScroll ) scrollDetector.emit( { type: 'delay:down' } );
 		}
-	}), 50);
+	}), 60);
 
 	function getScrollY() {
 
 		return html.scrollTop || body.scrollTop;
 	}
 
-	return scrollWatcher;
+	return scrollDetector;
 
 })));

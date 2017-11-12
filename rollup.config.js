@@ -31,7 +31,7 @@ export default {
 	targets: [
 		{
 			format: 'umd',
-			moduleName: 'cameraControlsFactory',
+			moduleName: 'scrollDetector',
 			dest: 'dist/scroll-detector.js',
 			banner: license
 		},

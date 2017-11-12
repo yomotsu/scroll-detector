@@ -5,7 +5,7 @@ const THRESHOLD = 30;
 const ENUM_AT_TOP = 0;
 const ENUM_AT_BOTTOM = 1;
 
-const scrollWatcher = new EventEmitter();
+const scrollDetector = new EventEmitter();
 const html = document.documentElement;
 const body = document.body;
 
@@ -19,20 +19,20 @@ let isUpScroll = null;
 let eventFired = false;
 
 // mute中はイベントをエミットしない
-scrollWatcher.mute = () => {
+scrollDetector.mute = () => {
 
 	isMuted = true;
 
 };
 
-scrollWatcher.unmute = () => {
+scrollDetector.unmute = () => {
 
 	lastScrollY = getScrollY();
 	isMuted = false;
 
 };
 
-scrollWatcher.getScrollTop = () => scrollY;
+scrollDetector.getScrollTop = () => scrollY;
 
 window.addEventListener( 'scroll', throttle( () => {
 
@@ -47,7 +47,7 @@ window.addEventListener( 'scroll', throttle( () => {
 
 		lastScrollY = scrollY;
 		directionStartY = lastScrollY;
-		scrollWatcher.emit( { type: 'scroll' } );
+		scrollDetector.emit( { type: 'scroll' } );
 		return;
 
 	}
@@ -74,13 +74,13 @@ window.addEventListener( 'scroll', throttle( () => {
 
 	}
 
-	scrollWatcher.emit( { type: 'scroll' } );
+	scrollDetector.emit( { type: 'scroll' } );
 
 	if ( isPageTop ) {
 
 		if ( previousAt !== ENUM_AT_TOP ) {
 
-			scrollWatcher.emit( { type: 'at:top' } );
+			scrollDetector.emit( { type: 'at:top' } );
 			previousAt = ENUM_AT_TOP;
 
 		}
@@ -94,7 +94,7 @@ window.addEventListener( 'scroll', throttle( () => {
 
 		if ( previousAt !== ENUM_AT_BOTTOM ) {
 
-			scrollWatcher.emit( { type: 'at:bottom' } );
+			scrollDetector.emit( { type: 'at:bottom' } );
 			previousAt = ENUM_AT_BOTTOM;
 
 		}
@@ -124,15 +124,15 @@ window.addEventListener( 'scroll', throttle( () => {
 	lastScrollY = scrollY;
 	const isDirectionChanged = isUpScrollPrev !== isUpScroll;
 
-	if (   isUpScroll ) scrollWatcher.emit( { type: 'scroll:up' } );
-	if ( ! isUpScroll ) scrollWatcher.emit( { type: 'scroll:down' } );
+	if (   isUpScroll ) scrollDetector.emit( { type: 'scroll:up' } );
+	if ( ! isUpScroll ) scrollDetector.emit( { type: 'scroll:down' } );
 
 	if ( isDirectionChanged ) {
 
 		directionStartY = scrollY;
 		eventFired = false;
 
-		if ( ! isUpScroll ) scrollWatcher.emit( { type: 'change:down' } );
+		if ( ! isUpScroll ) scrollDetector.emit( { type: 'change:down' } );
 
 	}
 
@@ -140,12 +140,12 @@ window.addEventListener( 'scroll', throttle( () => {
 
 		eventFired = true;
 
-		if (   isUpScroll ) scrollWatcher.emit( { type: 'delay:up' } );
-		// if ( ! isUpScroll ) scrollWatcher.emit( { type: 'delay:down' } );
+		if (   isUpScroll ) scrollDetector.emit( { type: 'delay:up' } );
+		// if ( ! isUpScroll ) scrollDetector.emit( { type: 'delay:down' } );
 
 	}
 
-} ), 50 );
+} ), 60 );
 
 function getScrollY() {
 
@@ -153,4 +153,4 @@ function getScrollY() {
 
 }
 
-export default scrollWatcher;
+export default scrollDetector;

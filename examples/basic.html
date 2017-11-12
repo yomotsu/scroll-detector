@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>=^.^=</title>
+</head>
+<body>
+<p><a href="https://github.com/yomotsu/scroll-detector">GitHub repo</a></p>
+<p style="color: #fff; background: #333;">scroll the page and see your console</p>
+
+<div>top</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div style="padding: 100px 0;">space</div>
+<div>bottom</div>
+
+
+<script src="../dist/scroll-detector.js"></script>
+<script>
+scrollDetector.on( 'scroll',      function () { console.log( 'scroll' ) } );
+scrollDetector.on( 'scroll:up',   function () { console.log( 'scroll:up' ) } );
+scrollDetector.on( 'scroll:down', function () { console.log( 'scroll:down' ) } );
+scrollDetector.on( 'at:top',      function () { console.log( 'at:top' ) } );
+scrollDetector.on( 'at:bottom',   function () { console.log( 'at:bottom' ) } );
+
+</script>
+
+</body>
+</html>
