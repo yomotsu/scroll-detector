@@ -92,32 +92,6 @@
 		return EventEmitter;
 	}();
 
-	function throttle(fn, threshhold) {
-
-		var last = void 0,
-		    deferTimer = void 0;
-
-		return function () {
-
-			var now = Date.now();
-
-			if (last && now < last + threshhold) {
-
-				clearTimeout(deferTimer);
-				deferTimer = setTimeout(function () {
-
-					last = now;
-					fn();
-				}, threshhold);
-			} else {
-
-				last = now;
-				fn();
-			}
-		};
-	}
-
-	var THRESHOLD = 30;
 	var ENUM_AT_TOP = 0;
 	var ENUM_AT_BOTTOM = 1;
 
@@ -129,10 +103,11 @@
 	var lastScrollY = null;
 	var lastWindowHeight = window.innerHeight;
 	var previousAt = null;
-	var directionStartY = lastScrollY;
 	var isMuted = false;
 	var isUpScroll = null;
-	var eventFired = false;
+
+	var throttleLast = void 0;
+	var throttleDeferTimer = void 0;
 
 	// mute中はイベントをエミットしない
 	scrollDetector.mute = function () {
@@ -150,7 +125,12 @@
 		return scrollY;
 	};
 
-	window.addEventListener('scroll', throttle(function () {
+	function getScrollY() {
+
+		return html.scrollTop || body.scrollTop;
+	}
+
+	function onScroll() {
 
 		if (isMuted) return;
 
@@ -162,7 +142,6 @@
 		if (!lastScrollY) {
 
 			lastScrollY = scrollY;
-			directionStartY = lastScrollY;
 			scrollDetector.emit({ type: 'scroll' });
 			return;
 		}
@@ -170,6 +149,31 @@
 		var pageHeight = html.scrollHeight;
 		var windowHeight = window.innerHeight;
 		var maxScroll = pageHeight - windowHeight;
+
+		// ページ表示直後以外はスクロールをthrottleする。
+		// ただし、ページ上部付近、下部付近では
+		// at top / at bottom 到達判定の精度向上のためにthrottleしない
+		var now = Date.now();
+		var isNearPageTop = scrollY <= 100;
+		var isNearPageBottom = maxScroll <= scrollY + 100;
+		var throttleThreshhold = isNearPageTop || isNearPageBottom ? 0 : 100; //ms
+		var isThrottled = throttleLast && now < throttleLast + throttleThreshhold;
+
+		if (isThrottled) {
+
+			clearTimeout(throttleDeferTimer);
+			throttleDeferTimer = setTimeout(function () {
+
+				throttleLast = now;
+				onScroll();
+			}, throttleThreshhold);
+
+			return;
+		} else {
+
+			throttleLast = now;
+		}
+
 		// iOSの場合、慣性スクロールでマイナスになる。
 		var isPageTop = scrollY <= 0;
 		// iOSの場合、慣性スクロールでページ高さ以上になる。
@@ -227,32 +231,19 @@
 		var isUpScrollPrev = isUpScroll;
 		isUpScroll = scrollY - lastScrollY < 0;
 		lastScrollY = scrollY;
-		var isDirectionChanged = isUpScrollPrev !== isUpScroll;
-
-		if (isUpScroll) scrollDetector.emit({ type: 'scroll:up' });
-		if (!isUpScroll) scrollDetector.emit({ type: 'scroll:down' });
+		var isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== isUpScroll;
 
 		if (isDirectionChanged) {
 
-			directionStartY = scrollY;
-			eventFired = false;
-
+			if (isUpScroll) scrollDetector.emit({ type: 'change:up' });
 			if (!isUpScroll) scrollDetector.emit({ type: 'change:down' });
 		}
 
-		if (!eventFired && Math.abs(directionStartY - scrollY) >= THRESHOLD) {
-
-			eventFired = true;
-
-			if (isUpScroll) scrollDetector.emit({ type: 'delay:up' });
-			// if ( ! isUpScroll ) scrollDetector.emit( { type: 'delay:down' } );
-		}
-	}), 60);
-
-	function getScrollY() {
-
-		return html.scrollTop || body.scrollTop;
+		if (isUpScroll) scrollDetector.emit({ type: 'scroll:up' });
+		if (!isUpScroll) scrollDetector.emit({ type: 'scroll:down' });
 	}
+
+	window.addEventListener('scroll', onScroll);
 
 	return scrollDetector;
 
