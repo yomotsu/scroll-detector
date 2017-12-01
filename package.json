@@ -8,10 +8,10 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-preset-env": "1.6.1",
-    "rollup": "^0.50.0",
+    "rollup": "^0.51.5",
     "rollup-plugin-babel": "3.0.2",
     "rollup-watch": "^4.3.1",
-    "uglify-js": "^3.1.5"
+    "uglify-js": "^3.1.9"
   },
   "scripts": {
     "dev": "npm run watch",
