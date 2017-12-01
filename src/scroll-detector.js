@@ -1,7 +1,5 @@
 import EventEmitter from './EventEmitter.js';
-import throttle from './throttle.js';
 
-const THRESHOLD = 30;
 const ENUM_AT_TOP = 0;
 const ENUM_AT_BOTTOM = 1;
 
@@ -16,7 +14,9 @@ let previousAt = null;
 let directionStartY = lastScrollY;
 let isMuted = false;
 let isUpScroll = null;
-let eventFired = false;
+
+let throttleLast;
+let throttleDeferTimer;
 
 // mute中はイベントをエミットしない
 scrollDetector.mute = () => {
@@ -34,7 +34,14 @@ scrollDetector.unmute = () => {
 
 scrollDetector.getScrollTop = () => scrollY;
 
-window.addEventListener( 'scroll', throttle( () => {
+
+function getScrollY() {
+
+	return html.scrollTop || body.scrollTop;
+
+}
+
+function onScroll() {
 
 	if ( isMuted ) return;
 
@@ -55,10 +62,41 @@ window.addEventListener( 'scroll', throttle( () => {
 	const pageHeight = html.scrollHeight;
 	const windowHeight = window.innerHeight;
 	const maxScroll = pageHeight - windowHeight;
+
+
+	// ページ表示直後以外はスクロールをthrottleする。
+	// ただし、ページ上部付近、下部付近では
+	// at top / at bottom 到達判定の精度向上のためにthrottleしない
+	const now = Date.now();
+	const isNearPageTop = scrollY <= 100;
+	const isNearPageBottom = maxScroll <= scrollY + 100;
+	const throttleThreshhold = isNearPageTop || isNearPageBottom ? 0 : 100; //ms
+	const isThrottled = throttleLast && now < throttleLast + throttleThreshhold;
+
+	if ( isThrottled ) {
+
+		clearTimeout( throttleDeferTimer );
+		throttleDeferTimer = setTimeout( () => {
+
+			throttleLast = now;
+			onScroll();
+
+		}, throttleThreshhold );
+
+		return;
+
+	} else {
+
+		throttleLast = now;
+
+	}
+
+
 	// iOSの場合、慣性スクロールでマイナスになる。
 	const isPageTop = scrollY <= 0;
 	// iOSの場合、慣性スクロールでページ高さ以上になる。
 	const isPageBottom = maxScroll <= scrollY;
+
 
 	// ページ表示直後、Chromeではスクロールをしていないのに
 	// 数回scrollイベントが発動する。
@@ -73,6 +111,7 @@ window.addEventListener( 'scroll', throttle( () => {
 		return;
 
 	}
+
 
 	scrollDetector.emit( { type: 'scroll' } );
 
@@ -122,35 +161,22 @@ window.addEventListener( 'scroll', throttle( () => {
 	const isUpScrollPrev = isUpScroll;
 	isUpScroll = scrollY - lastScrollY < 0;
 	lastScrollY = scrollY;
-	const isDirectionChanged = isUpScrollPrev !== isUpScroll;
-
-	if (   isUpScroll ) scrollDetector.emit( { type: 'scroll:up' } );
-	if ( ! isUpScroll ) scrollDetector.emit( { type: 'scroll:down' } );
+	const isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== isUpScroll;
 
 	if ( isDirectionChanged ) {
 
 		directionStartY = scrollY;
-		eventFired = false;
 
+		if (   isUpScroll ) scrollDetector.emit( { type: 'change:up' } );
 		if ( ! isUpScroll ) scrollDetector.emit( { type: 'change:down' } );
 
 	}
 
-	if ( ! eventFired && Math.abs( directionStartY - scrollY ) >= THRESHOLD ) {
-
-		eventFired = true;
-
-		if (   isUpScroll ) scrollDetector.emit( { type: 'delay:up' } );
-		// if ( ! isUpScroll ) scrollDetector.emit( { type: 'delay:down' } );
-
-	}
-
-} ), 60 );
-
-function getScrollY() {
-
-	return html.scrollTop || body.scrollTop;
+	if (   isUpScroll ) scrollDetector.emit( { type: 'scroll:up' } );
+	if ( ! isUpScroll ) scrollDetector.emit( { type: 'scroll:down' } );
 
 }
+
+window.addEventListener( 'scroll', onScroll );
 
 export default scrollDetector;
