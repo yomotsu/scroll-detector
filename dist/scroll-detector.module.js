@@ -93,7 +93,7 @@ var scrollDetector = new EventEmitter();
 var html = document.documentElement;
 var body = document.body;
 
-var scrollY = null;
+var scrollY = getScrollY();
 var lastScrollY = null;
 var lastWindowHeight = window.innerHeight;
 var previousAt = null;
@@ -119,11 +119,6 @@ scrollDetector.getScrollTop = function () {
 	return scrollY;
 };
 
-function getScrollY() {
-
-	return html.scrollTop || body.scrollTop;
-}
-
 function onScroll() {
 
 	if (isMuted) return;
@@ -140,7 +135,7 @@ function onScroll() {
 		return;
 	}
 
-	var pageHeight = html.scrollHeight;
+	var pageHeight = getPageHeight();
 	var windowHeight = window.innerHeight;
 	var maxScroll = pageHeight - windowHeight;
 
@@ -238,5 +233,15 @@ function onScroll() {
 }
 
 window.addEventListener('scroll', onScroll);
+
+function getScrollY() {
+
+	return html.scrollTop || body.scrollTop;
+}
+
+function getPageHeight() {
+
+	return html.scrollHeight;
+}
 
 export default scrollDetector;

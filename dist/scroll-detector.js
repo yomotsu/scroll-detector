@@ -99,7 +99,7 @@
 	var html = document.documentElement;
 	var body = document.body;
 
-	var scrollY = null;
+	var scrollY = getScrollY();
 	var lastScrollY = null;
 	var lastWindowHeight = window.innerHeight;
 	var previousAt = null;
@@ -125,11 +125,6 @@
 		return scrollY;
 	};
 
-	function getScrollY() {
-
-		return html.scrollTop || body.scrollTop;
-	}
-
 	function onScroll() {
 
 		if (isMuted) return;
@@ -146,7 +141,7 @@
 			return;
 		}
 
-		var pageHeight = html.scrollHeight;
+		var pageHeight = getPageHeight();
 		var windowHeight = window.innerHeight;
 		var maxScroll = pageHeight - windowHeight;
 
@@ -244,6 +239,16 @@
 	}
 
 	window.addEventListener('scroll', onScroll);
+
+	function getScrollY() {
+
+		return html.scrollTop || body.scrollTop;
+	}
+
+	function getPageHeight() {
+
+		return html.scrollHeight;
+	}
 
 	return scrollDetector;
 
