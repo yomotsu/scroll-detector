@@ -7,11 +7,10 @@ const scrollDetector = new EventEmitter();
 const html = document.documentElement;
 const body = document.body;
 
-let scrollY = null;
+let scrollY = getScrollY();
 let lastScrollY = null;
 let lastWindowHeight = window.innerHeight;
 let previousAt = null;
-let directionStartY = lastScrollY;
 let isMuted = false;
 let isUpScroll = null;
 
@@ -34,13 +33,6 @@ scrollDetector.unmute = () => {
 
 scrollDetector.getScrollTop = () => scrollY;
 
-
-function getScrollY() {
-
-	return html.scrollTop || body.scrollTop;
-
-}
-
 function onScroll() {
 
 	if ( isMuted ) return;
@@ -53,16 +45,14 @@ function onScroll() {
 	if ( ! lastScrollY ) {
 
 		lastScrollY = scrollY;
-		directionStartY = lastScrollY;
 		scrollDetector.emit( { type: 'scroll' } );
 		return;
 
 	}
 
-	const pageHeight = html.scrollHeight;
+	const pageHeight = getPageHeight();
 	const windowHeight = window.innerHeight;
 	const maxScroll = pageHeight - windowHeight;
-
 
 	// ページ表示直後以外はスクロールをthrottleする。
 	// ただし、ページ上部付近、下部付近では
@@ -165,8 +155,6 @@ function onScroll() {
 
 	if ( isDirectionChanged ) {
 
-		directionStartY = scrollY;
-
 		if (   isUpScroll ) scrollDetector.emit( { type: 'change:up' } );
 		if ( ! isUpScroll ) scrollDetector.emit( { type: 'change:down' } );
 
@@ -180,3 +168,16 @@ function onScroll() {
 window.addEventListener( 'scroll', onScroll );
 
 export default scrollDetector;
+
+
+function getScrollY() {
+
+	return html.scrollTop || body.scrollTop;
+
+}
+
+function getPageHeight() {
+
+	return html.scrollHeight;
+
+}
