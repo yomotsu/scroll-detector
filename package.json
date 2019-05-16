@@ -1,6 +1,6 @@
 {
   "name": "scroll-detector",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "detect scroll direction, position and others",
   "main": "dist/scroll-detector.js",
   "jsnext:main": "dist/scroll-detector.module.js",
