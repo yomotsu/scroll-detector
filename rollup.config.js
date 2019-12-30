@@ -1,44 +1,31 @@
-import babel from 'rollup-plugin-babel'
+import typescript from 'rollup-plugin-typescript2';
+import pkg from './package.json';
 
 const license = `/*!
- * scroll-detector
- * https://github.com/yomotsu/scroll-detector
+ * ${ pkg.name }
+ * https://github.com/${ pkg.repository }
  * (c) 2017 @yomotsu
  * Released under the MIT License.
- */`
+ */`;
 
 export default {
-	entry: 'src/scroll-detector.js',
-	indent: '\t',
-	sourceMap: false,
-	plugins: [
-		babel( {
-			exclude: 'node_modules/**',
-			presets: [
-				[ 'env', {
-					targets: {
-						browsers: [
-							'last 2 versions',
-							'ie >= 11'
-						]
-					},
-					loose: true,
-					modules: false
-				} ]
-			]
-		} )
-	],
-	targets: [
+	input: 'src/scroll-detector.ts',
+	output: [
 		{
 			format: 'umd',
-			moduleName: 'scrollDetector',
-			dest: 'dist/scroll-detector.js',
-			banner: license
+			name: 'scrollDetector',
+			file: pkg.main,
+			banner: license,
+			indent: '\t',
 		},
 		{
 			format: 'es',
-			dest: 'dist/scroll-detector.module.js',
-			banner: license
+			file: pkg.module,
+			banner: license,
+			indent: '\t',
 		}
-	]
+	],
+	plugins: [
+		typescript( { typescript: require( 'typescript' ) } ),
+	],
 };
