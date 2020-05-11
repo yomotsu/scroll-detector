@@ -43,6 +43,8 @@ scrollDetector.on( 'at:bottom', () => {
 
 ## Other features
 
+- `scrollDetector.isPageTop()` whether at the page top or not.
+- `scrollDetector.isPageBottom()` whether at the page bottom or not.
 - `scrollDetector.off( eventName, func )` to remove the listener.
 - `scrollDetector.getScrollTop()` will return scrollTop amount in pixels.
 - `scrollDetector.mute()` to disabled the detector.

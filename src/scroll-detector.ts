@@ -11,6 +11,8 @@ class ScrollDetector extends EventEmitter {
 	mute: () => void;
 	unmute: () => void;
 	getScrollTop: () => number;
+	isPageTop: () => boolean;
+	isPageBottom: () => boolean;
 
 	constructor() {
 
@@ -22,6 +24,10 @@ class ScrollDetector extends EventEmitter {
 		let previousAt: number | null = null;
 		let isMuted = false;
 		let isUpScroll: boolean | null = null;
+
+		const maxScroll = getPageHeight() - window.innerHeight;
+		let isPageTop = scrollY <= 0;
+		let isPageBottom = maxScroll <= scrollY;
 
 		let throttleLast: number;
 		let throttleDeferTimer: number;
@@ -42,7 +48,19 @@ class ScrollDetector extends EventEmitter {
 
 		this.getScrollTop = (): number => {
 
-			return 	scrollY;
+			return scrollY;
+
+		};
+
+		this.isPageTop = (): boolean => {
+
+			return isPageTop;
+
+		};
+
+		this.isPageBottom = (): boolean => {
+
+			return isPageBottom;
 
 		};
 
@@ -97,9 +115,9 @@ class ScrollDetector extends EventEmitter {
 			}
 
 			// iOSの場合、慣性スクロールでマイナスになる。
-			const isPageTop = scrollY <= 0;
+			isPageTop = scrollY <= 0;
 			// iOSの場合、慣性スクロールでページ高さ以上になる。
-			const isPageBottom = maxScroll <= scrollY;
+			isPageBottom = maxScroll <= scrollY;
 
 			// ページ表示直後、Chromeではスクロールをしていないのに
 			// 数回scrollイベントが発動する。
