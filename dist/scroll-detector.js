@@ -91,6 +91,9 @@
 	        var previousAt = null;
 	        var isMuted = false;
 	        var isUpScroll = null;
+	        var maxScroll = getPageHeight() - window.innerHeight;
+	        var isPageTop = scrollY <= 0;
+	        var isPageBottom = maxScroll <= scrollY;
 	        var throttleLast;
 	        var throttleDeferTimer;
 	        _this.mute = function () {
@@ -102,6 +105,12 @@
 	        };
 	        _this.getScrollTop = function () {
 	            return scrollY;
+	        };
+	        _this.isPageTop = function () {
+	            return isPageTop;
+	        };
+	        _this.isPageBottom = function () {
+	            return isPageBottom;
 	        };
 	        var that = _this;
 	        function onScroll() {
@@ -132,8 +141,8 @@
 	            else {
 	                throttleLast = now;
 	            }
-	            var isPageTop = scrollY <= 0;
-	            var isPageBottom = maxScroll <= scrollY;
+	            isPageTop = scrollY <= 0;
+	            isPageBottom = maxScroll <= scrollY;
 	            if (Math.abs(scrollY - lastScrollY) <= 1 &&
 	                !isPageTop &&
 	                !isPageBottom) {
