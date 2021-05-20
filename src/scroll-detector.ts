@@ -3,14 +3,30 @@ import EventEmitter from './EventEmitter';
 const ENUM_AT_TOP = 0;
 const ENUM_AT_BOTTOM = 1;
 
-const html = document.documentElement;
-const body = document.body;
+const $html = document.documentElement;
+const $body = document.body;
+
+interface ScrollDetectorState {
+	scrollY: number,
+	lastScrollY: number | null,
+	scrollProgress: number,
+	lastViewportHeight: number,
+	previousAt: number | null,
+	isMuted: boolean,
+	isUpScroll: boolean | null,
+	isPageTop: boolean,
+	isPageBottom: boolean,
+
+	throttleLast: number,
+	throttleDeferTimer: number,
+}
 
 class ScrollDetector extends EventEmitter {
 
 	mute: () => void;
 	unmute: () => void;
 	getScrollTop: () => number;
+	getScrollProgress: () => number;
 	isPageTop: () => boolean;
 	isPageBottom: () => boolean;
 
@@ -18,90 +34,80 @@ class ScrollDetector extends EventEmitter {
 
 		super();
 
-		let scrollY = getScrollY();
-		let lastScrollY: number | null = null;
-		let lastWindowHeight = window.innerHeight;
-		let previousAt: number | null = null;
-		let isMuted = false;
-		let isUpScroll: boolean | null = null;
+		const maxScroll = getPageHeight() - $html.clientHeight;
+		const scrollY = getScrollY();
+		const state: ScrollDetectorState = {
+			scrollY,
+			lastScrollY: null,
+			scrollProgress: scrollY / ( getPageHeight() - $html.clientHeight ),
+			lastViewportHeight: $html.clientHeight,
+			previousAt: null,
+			isMuted: false,
+			isUpScroll: null,
 
-		const maxScroll = getPageHeight() - window.innerHeight;
-		let isPageTop = scrollY <= 0;
-		let isPageBottom = maxScroll <= scrollY;
+			isPageTop: scrollY <= 0,
+			isPageBottom: maxScroll <= scrollY,
 
-		let throttleLast: number;
-		let throttleDeferTimer: number;
+			throttleLast: - 1,
+			throttleDeferTimer: - 1,
+		};
 
 		// mute中はイベントをエミットしない
 		this.mute = (): void => {
 
-			isMuted = true;
+			state.isMuted = true;
 
 		};
 
 		this.unmute = (): void =>  {
 
-			lastScrollY = getScrollY();
-			isMuted = false;
+			state.lastScrollY = getScrollY();
+			state.isMuted = false;
 
 		};
 
-		this.getScrollTop = (): number => {
+		this.getScrollTop = () => state.scrollY;
+		this.getScrollProgress = () => state.scrollProgress;
+		this.isPageTop = () => state.isPageTop;
+		this.isPageBottom = () => state.isPageBottom;
 
-			return scrollY;
+		const onScroll = () => {
 
-		};
+			if ( state.isMuted ) return;
 
-		this.isPageTop = (): boolean => {
-
-			return isPageTop;
-
-		};
-
-		this.isPageBottom = (): boolean => {
-
-			return isPageBottom;
-
-		};
-
-		const that = this;
-
-		function onScroll() {
-
-			if ( isMuted ) return;
-
-			scrollY = getScrollY();
+			state.scrollY = getScrollY();
+			state.scrollProgress = state.scrollY / ( getPageHeight() - $html.clientHeight );
 
 			// ページ表示後に初めて、自動で発生するスクロール。
 			// ブラウザにより自動で引き起こされる。
 			// ユーザーによる操作ではないので、スクロール方向判定は無視する
-			if ( ! lastScrollY ) {
+			if ( ! state.lastScrollY ) {
 
-				lastScrollY = scrollY;
-				that.emit( { type: 'scroll' } );
+				state.lastScrollY = state.scrollY;
+				this.emit( { type: 'scroll' } );
 				return;
 
 			}
 
 			const pageHeight = getPageHeight();
-			const windowHeight = window.innerHeight;
-			const maxScroll = pageHeight - windowHeight;
+			const viewportHeight = $html.clientHeight;
+			const maxScroll = pageHeight - viewportHeight;
 
 			// ページ表示直後以外はスクロールをthrottleする。
 			// ただし、ページ上部付近、下部付近では
 			// at top / at bottom 到達判定の精度向上のためにthrottleしない
 			const now = Date.now();
-			const isNearPageTop = scrollY <= 100;
-			const isNearPageBottom = maxScroll <= scrollY + 100;
+			const isNearPageTop = state.scrollY <= 100;
+			const isNearPageBottom = maxScroll <= state.scrollY + 100;
 			const throttleThreshold = isNearPageTop || isNearPageBottom ? 0 : 100; //ms
-			const isThrottled = throttleLast && now < throttleLast + throttleThreshold;
+			const isThrottled = state.throttleLast && now < state.throttleLast + throttleThreshold;
 
 			if ( isThrottled ) {
 
-				clearTimeout( throttleDeferTimer );
-				throttleDeferTimer = window.setTimeout( () => {
+				clearTimeout( state.throttleDeferTimer );
+				state.throttleDeferTimer = window.setTimeout( () => {
 
-					throttleLast = now;
+					state.throttleLast = now;
 					onScroll();
 
 				}, throttleThreshold );
@@ -110,90 +116,90 @@ class ScrollDetector extends EventEmitter {
 
 			} else {
 
-				throttleLast = now;
+				state.throttleLast = now;
 
 			}
 
 			// iOSの場合、慣性スクロールでマイナスになる。
-			isPageTop = scrollY <= 0;
+			state.isPageTop = state.scrollY <= 0;
 			// iOSの場合、慣性スクロールでページ高さ以上になる。
-			isPageBottom = maxScroll <= scrollY;
+			state.isPageBottom = maxScroll <= state.scrollY;
 
 			// ページ表示直後、Chromeではスクロールをしていないのに
 			// 数回scrollイベントが発動する。
 			// それを抑止する。
 			// このとき、ページをスクロールした状態でのリロードだった場合、1pxの誤差がある
 			if (
-				Math.abs( scrollY - lastScrollY ) <= 1 &&
-				! isPageTop &&
-				! isPageBottom
+				Math.abs( state.scrollY - state.lastScrollY ) <= 1 &&
+				! state.isPageTop &&
+				! state.isPageBottom
 			) {
 
 				return;
 
 			}
 
-			that.emit( { type: 'scroll' } );
+			this.emit( { type: 'scroll' } );
 
-			if ( isPageTop ) {
+			if ( state.isPageTop ) {
 
-				if ( previousAt !== ENUM_AT_TOP ) {
+				if ( state.previousAt !== ENUM_AT_TOP ) {
 
-					that.emit( { type: 'at:top' } );
-					previousAt = ENUM_AT_TOP;
+					this.emit( { type: 'at:top' } );
+					state.previousAt = ENUM_AT_TOP;
 
 				}
 
-				lastScrollY = 0;
+				state.lastScrollY = 0;
 				return;
 
 			}
 
-			if ( isPageBottom ) {
+			if ( state.isPageBottom ) {
 
-				if ( previousAt !== ENUM_AT_BOTTOM ) {
+				if ( state.previousAt !== ENUM_AT_BOTTOM ) {
 
-					that.emit( { type: 'at:bottom' } );
-					previousAt = ENUM_AT_BOTTOM;
+					this.emit( { type: 'at:bottom' } );
+					state.previousAt = ENUM_AT_BOTTOM;
 
 				}
 
-				lastScrollY = maxScroll;
+				state.lastScrollY = maxScroll;
 				return;
 
 			}
 
-			previousAt = null;
+			state.previousAt = null;
 
-			const isWindowResized = windowHeight !== lastWindowHeight;
-			lastWindowHeight = windowHeight;
+			const isWindowResized = viewportHeight !== state.lastViewportHeight;
+			state.lastViewportHeight = viewportHeight;
 
 			// スクロール中にiOSのURLバーの有無などでウインドウサイズが変わると
 			// スクロール方向を正しく計算できない
 			// その場合、スクロール方向判定は無視する
 			if ( isWindowResized ) {
 
-				lastScrollY = scrollY;
+				state.lastScrollY = state.scrollY;
 				return;
 
 			}
 
-			const isUpScrollPrev = isUpScroll;
-			isUpScroll = scrollY - lastScrollY < 0;
-			lastScrollY = scrollY;
-			const isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== isUpScroll;
+			const isUpScrollPrev = state.isUpScroll;
+			state.isUpScroll = state.scrollY - state.lastScrollY < 0;
+			state.lastScrollY = state.scrollY;
+			const isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== state.isUpScroll;
 
 			if ( isDirectionChanged ) {
 
-				if (   isUpScroll ) that.emit( { type: 'change:up' } );
-				if ( ! isUpScroll ) that.emit( { type: 'change:down' } );
+				if (   state.isUpScroll ) this.emit( { type: 'change:up' } );
+				if ( ! state.isUpScroll ) this.emit( { type: 'change:down' } );
 
 			}
 
-			if (   isUpScroll ) that.emit( { type: 'scroll:up' } );
-			if ( ! isUpScroll ) that.emit( { type: 'scroll:down' } );
+			if (   state.isUpScroll ) this.emit( { type: 'scroll:up' } );
+			if ( ! state.isUpScroll ) this.emit( { type: 'scroll:down' } );
 
-		}
+		};
 
 		window.addEventListener( 'scroll', onScroll, { passive: true } );
 
@@ -205,12 +211,12 @@ export default new ScrollDetector();
 
 function getScrollY(): number {
 
-	return html.scrollTop || body.scrollTop;
+	return $html.scrollTop || $body.scrollTop;
 
 }
 
 function getPageHeight(): number {
 
-	return html.scrollHeight;
+	return $html.scrollHeight;
 
 }
