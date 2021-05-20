@@ -3,6 +3,7 @@ declare class ScrollDetector extends EventEmitter {
     mute: () => void;
     unmute: () => void;
     getScrollTop: () => number;
+    getScrollProgress: () => number;
     isPageTop: () => boolean;
     isPageBottom: () => boolean;
     constructor();

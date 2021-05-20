@@ -7,33 +7,35 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	(global = global || self, global.scrollDetector = factory());
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.scrollDetector = factory());
 }(this, (function () { 'use strict';
 
 	/*! *****************************************************************************
-	Copyright (c) Microsoft Corporation. All rights reserved.
-	Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-	this file except in compliance with the License. You may obtain a copy of the
-	License at http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) Microsoft Corporation.
 
-	THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-	KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-	WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-	MERCHANTABLITY OR NON-INFRINGEMENT.
+	Permission to use, copy, modify, and/or distribute this software for any
+	purpose with or without fee is hereby granted.
 
-	See the Apache Version 2.0 License for specific language governing permissions
-	and limitations under the License.
+	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+	REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+	AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+	INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+	LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+	OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+	PERFORMANCE OF THIS SOFTWARE.
 	***************************************************************************** */
 	/* global Reflect, Promise */
 
 	var extendStatics = function(d, b) {
 	    extendStatics = Object.setPrototypeOf ||
 	        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-	        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+	        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
 	    return extendStatics(d, b);
 	};
 
 	function __extends(d, b) {
+	    if (typeof b !== "function" && b !== null)
+	        throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
 	    extendStatics(d, b);
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -79,114 +81,113 @@
 
 	var ENUM_AT_TOP = 0;
 	var ENUM_AT_BOTTOM = 1;
-	var html = document.documentElement;
-	var body = document.body;
+	var $html = document.documentElement;
+	var $body = document.body;
 	var ScrollDetector = (function (_super) {
 	    __extends(ScrollDetector, _super);
 	    function ScrollDetector() {
 	        var _this = _super.call(this) || this;
+	        var maxScroll = getPageHeight() - $html.clientHeight;
 	        var scrollY = getScrollY();
-	        var lastScrollY = null;
-	        var lastWindowHeight = window.innerHeight;
-	        var previousAt = null;
-	        var isMuted = false;
-	        var isUpScroll = null;
-	        var maxScroll = getPageHeight() - window.innerHeight;
-	        var isPageTop = scrollY <= 0;
-	        var isPageBottom = maxScroll <= scrollY;
-	        var throttleLast;
-	        var throttleDeferTimer;
+	        var state = {
+	            scrollY: scrollY,
+	            lastScrollY: null,
+	            scrollProgress: scrollY / (getPageHeight() - $html.clientHeight),
+	            lastViewportHeight: $html.clientHeight,
+	            previousAt: null,
+	            isMuted: false,
+	            isUpScroll: null,
+	            isPageTop: scrollY <= 0,
+	            isPageBottom: maxScroll <= scrollY,
+	            throttleLast: -1,
+	            throttleDeferTimer: -1,
+	        };
 	        _this.mute = function () {
-	            isMuted = true;
+	            state.isMuted = true;
 	        };
 	        _this.unmute = function () {
-	            lastScrollY = getScrollY();
-	            isMuted = false;
+	            state.lastScrollY = getScrollY();
+	            state.isMuted = false;
 	        };
-	        _this.getScrollTop = function () {
-	            return scrollY;
-	        };
-	        _this.isPageTop = function () {
-	            return isPageTop;
-	        };
-	        _this.isPageBottom = function () {
-	            return isPageBottom;
-	        };
-	        var that = _this;
-	        function onScroll() {
-	            if (isMuted)
+	        _this.getScrollTop = function () { return state.scrollY; };
+	        _this.getScrollProgress = function () { return state.scrollProgress; };
+	        _this.isPageTop = function () { return state.isPageTop; };
+	        _this.isPageBottom = function () { return state.isPageBottom; };
+	        var onScroll = function () {
+	            if (state.isMuted)
 	                return;
-	            scrollY = getScrollY();
-	            if (!lastScrollY) {
-	                lastScrollY = scrollY;
-	                that.emit({ type: 'scroll' });
+	            state.scrollY = getScrollY();
+	            state.scrollProgress = state.scrollY / (getPageHeight() - $html.clientHeight);
+	            if (!state.lastScrollY) {
+	                state.lastScrollY = state.scrollY;
+	                _this.emit({ type: 'scroll' });
 	                return;
 	            }
 	            var pageHeight = getPageHeight();
-	            var windowHeight = window.innerHeight;
-	            var maxScroll = pageHeight - windowHeight;
+	            var viewportHeight = $html.clientHeight;
+	            var maxScroll = pageHeight - viewportHeight;
 	            var now = Date.now();
-	            var isNearPageTop = scrollY <= 100;
-	            var isNearPageBottom = maxScroll <= scrollY + 100;
+	            var isNearPageTop = state.scrollY <= 100;
+	            var isNearPageBottom = maxScroll <= state.scrollY + 100;
 	            var throttleThreshold = isNearPageTop || isNearPageBottom ? 0 : 100;
-	            var isThrottled = throttleLast && now < throttleLast + throttleThreshold;
+	            var isThrottled = state.throttleLast && now < state.throttleLast + throttleThreshold;
 	            if (isThrottled) {
-	                clearTimeout(throttleDeferTimer);
-	                throttleDeferTimer = window.setTimeout(function () {
-	                    throttleLast = now;
+	                clearTimeout(state.throttleDeferTimer);
+	                state.throttleDeferTimer = window.setTimeout(function () {
+	                    state.throttleLast = now;
 	                    onScroll();
 	                }, throttleThreshold);
 	                return;
 	            }
 	            else {
-	                throttleLast = now;
+	                state.throttleLast = now;
 	            }
-	            isPageTop = scrollY <= 0;
-	            isPageBottom = maxScroll <= scrollY;
-	            if (Math.abs(scrollY - lastScrollY) <= 1 &&
-	                !isPageTop &&
-	                !isPageBottom) {
+	            state.isPageTop = state.scrollY <= 0;
+	            state.isPageBottom = maxScroll <= state.scrollY;
+	            if (Math.abs(state.scrollY - state.lastScrollY) <= 1 &&
+	                !state.isPageTop &&
+	                !state.isPageBottom) {
 	                return;
 	            }
-	            that.emit({ type: 'scroll' });
-	            if (isPageTop) {
-	                if (previousAt !== ENUM_AT_TOP) {
-	                    that.emit({ type: 'at:top' });
-	                    previousAt = ENUM_AT_TOP;
+	            _this.emit({ type: 'scroll' });
+	            if (state.isPageTop) {
+	                if (state.previousAt !== ENUM_AT_TOP) {
+	                    _this.emit({ type: 'at:top' });
+	                    state.previousAt = ENUM_AT_TOP;
 	                }
-	                lastScrollY = 0;
+	                state.lastScrollY = 0;
 	                return;
 	            }
-	            if (isPageBottom) {
-	                if (previousAt !== ENUM_AT_BOTTOM) {
-	                    that.emit({ type: 'at:bottom' });
-	                    previousAt = ENUM_AT_BOTTOM;
+	            if (state.isPageBottom) {
+	                if (state.previousAt !== ENUM_AT_BOTTOM) {
+	                    _this.emit({ type: 'at:bottom' });
+	                    state.previousAt = ENUM_AT_BOTTOM;
 	                }
-	                lastScrollY = maxScroll;
+	                state.lastScrollY = maxScroll;
 	                return;
 	            }
-	            previousAt = null;
-	            var isWindowResized = windowHeight !== lastWindowHeight;
-	            lastWindowHeight = windowHeight;
+	            state.previousAt = null;
+	            var isWindowResized = viewportHeight !== state.lastViewportHeight;
+	            state.lastViewportHeight = viewportHeight;
 	            if (isWindowResized) {
-	                lastScrollY = scrollY;
+	                state.lastScrollY = state.scrollY;
 	                return;
 	            }
-	            var isUpScrollPrev = isUpScroll;
-	            isUpScroll = scrollY - lastScrollY < 0;
-	            lastScrollY = scrollY;
-	            var isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== isUpScroll;
+	            var isUpScrollPrev = state.isUpScroll;
+	            state.isUpScroll = state.scrollY - state.lastScrollY < 0;
+	            state.lastScrollY = state.scrollY;
+	            var isDirectionChanged = isUpScrollPrev !== null && isUpScrollPrev !== state.isUpScroll;
 	            if (isDirectionChanged) {
-	                if (isUpScroll)
-	                    that.emit({ type: 'change:up' });
-	                if (!isUpScroll)
-	                    that.emit({ type: 'change:down' });
+	                if (state.isUpScroll)
+	                    _this.emit({ type: 'change:up' });
+	                if (!state.isUpScroll)
+	                    _this.emit({ type: 'change:down' });
 	            }
-	            if (isUpScroll)
-	                that.emit({ type: 'scroll:up' });
-	            if (!isUpScroll)
-	                that.emit({ type: 'scroll:down' });
-	        }
+	            if (state.isUpScroll)
+	                _this.emit({ type: 'scroll:up' });
+	            if (!state.isUpScroll)
+	                _this.emit({ type: 'scroll:down' });
+	        };
 	        window.addEventListener('scroll', onScroll, { passive: true });
 	        return _this;
 	    }
@@ -194,10 +195,10 @@
 	}(EventEmitter));
 	var scrollDetector = new ScrollDetector();
 	function getScrollY() {
-	    return html.scrollTop || body.scrollTop;
+	    return $html.scrollTop || $body.scrollTop;
 	}
 	function getPageHeight() {
-	    return html.scrollHeight;
+	    return $html.scrollHeight;
 	}
 
 	return scrollDetector;
