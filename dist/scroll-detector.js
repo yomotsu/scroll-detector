@@ -81,19 +81,20 @@
 
 	var ENUM_AT_TOP = 0;
 	var ENUM_AT_BOTTOM = 1;
-	var $html = document.documentElement;
-	var $body = document.body;
+	var isBrowser = typeof window !== 'undefined';
+	var $html = isBrowser ? document.documentElement : null;
+	var $body = isBrowser ? document.body : null;
 	var ScrollDetector = (function (_super) {
 	    __extends(ScrollDetector, _super);
 	    function ScrollDetector() {
 	        var _this = _super.call(this) || this;
-	        var maxScroll = getPageHeight() - $html.clientHeight;
+	        var maxScroll = $html ? getPageHeight() - $html.clientHeight : 0;
 	        var scrollY = getScrollY();
 	        var state = {
 	            scrollY: scrollY,
 	            lastScrollY: null,
-	            scrollProgress: scrollY / (getPageHeight() - $html.clientHeight),
-	            lastViewportHeight: $html.clientHeight,
+	            scrollProgress: $html ? scrollY / (getPageHeight() - $html.clientHeight) : 0,
+	            lastViewportHeight: $html ? $html.clientHeight : 0,
 	            previousAt: null,
 	            isMuted: false,
 	            isUpScroll: null,
@@ -117,14 +118,14 @@
 	            if (state.isMuted)
 	                return;
 	            state.scrollY = getScrollY();
-	            state.scrollProgress = state.scrollY / (getPageHeight() - $html.clientHeight);
+	            state.scrollProgress = $html ? state.scrollY / (getPageHeight() - $html.clientHeight) : 0;
 	            if (!state.lastScrollY) {
 	                state.lastScrollY = state.scrollY;
 	                _this.emit({ type: 'scroll' });
 	                return;
 	            }
 	            var pageHeight = getPageHeight();
-	            var viewportHeight = $html.clientHeight;
+	            var viewportHeight = $html ? $html.clientHeight : 0;
 	            var maxScroll = pageHeight - viewportHeight;
 	            var now = Date.now();
 	            var isNearPageTop = state.scrollY <= 100;
@@ -195,10 +196,10 @@
 	}(EventEmitter));
 	var scrollDetector = new ScrollDetector();
 	function getScrollY() {
-	    return $html.scrollTop || $body.scrollTop;
+	    return ($html && $body) ? $html.scrollTop || $body.scrollTop : 0;
 	}
 	function getPageHeight() {
-	    return $html.scrollHeight;
+	    return $html ? $html.scrollHeight : 0;
 	}
 
 	return scrollDetector;
