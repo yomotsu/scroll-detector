@@ -183,7 +183,7 @@ var ScrollDetector = (function (_super) {
             if (!state.isUpScroll)
                 _this.emit({ type: 'scroll:down' });
         };
-        window.addEventListener('scroll', onScroll, { passive: true });
+        isBrowser && window.addEventListener('scroll', onScroll, { passive: true });
         return _this;
     }
     return ScrollDetector;
