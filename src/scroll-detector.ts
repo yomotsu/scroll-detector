@@ -202,7 +202,7 @@ class ScrollDetector extends EventEmitter {
 
 		};
 
-		window.addEventListener( 'scroll', onScroll, { passive: true } );
+		isBrowser && window.addEventListener( 'scroll', onScroll, { passive: true } );
 
 	}
 
