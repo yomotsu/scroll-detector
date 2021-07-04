@@ -3,8 +3,9 @@ import EventEmitter from './EventEmitter';
 const ENUM_AT_TOP = 0;
 const ENUM_AT_BOTTOM = 1;
 
-const $html = document.documentElement;
-const $body = document.body;
+const isBrowser = typeof window !== 'undefined';
+const $html: HTMLElement | null = isBrowser ? document.documentElement : null;
+const $body: HTMLElement | null = isBrowser ? document.body : null;
 
 interface ScrollDetectorState {
 	scrollY: number,
@@ -34,13 +35,13 @@ class ScrollDetector extends EventEmitter {
 
 		super();
 
-		const maxScroll = getPageHeight() - $html.clientHeight;
+		const maxScroll = $html ? getPageHeight() - $html.clientHeight : 0;
 		const scrollY = getScrollY();
 		const state: ScrollDetectorState = {
 			scrollY,
 			lastScrollY: null,
-			scrollProgress: scrollY / ( getPageHeight() - $html.clientHeight ),
-			lastViewportHeight: $html.clientHeight,
+			scrollProgress: $html ? scrollY / ( getPageHeight() - $html.clientHeight ) : 0,
+			lastViewportHeight: $html ? $html.clientHeight : 0,
 			previousAt: null,
 			isMuted: false,
 			isUpScroll: null,
@@ -76,7 +77,7 @@ class ScrollDetector extends EventEmitter {
 			if ( state.isMuted ) return;
 
 			state.scrollY = getScrollY();
-			state.scrollProgress = state.scrollY / ( getPageHeight() - $html.clientHeight );
+			state.scrollProgress = $html ? state.scrollY / ( getPageHeight() - $html.clientHeight ) : 0;
 
 			// ページ表示後に初めて、自動で発生するスクロール。
 			// ブラウザにより自動で引き起こされる。
@@ -90,7 +91,7 @@ class ScrollDetector extends EventEmitter {
 			}
 
 			const pageHeight = getPageHeight();
-			const viewportHeight = $html.clientHeight;
+			const viewportHeight = $html ? $html.clientHeight : 0;
 			const maxScroll = pageHeight - viewportHeight;
 
 			// ページ表示直後以外はスクロールをthrottleする。
@@ -211,12 +212,12 @@ export default new ScrollDetector();
 
 function getScrollY(): number {
 
-	return $html.scrollTop || $body.scrollTop;
+	return ( $html && $body ) ? $html.scrollTop || $body.scrollTop : 0;
 
 }
 
 function getPageHeight(): number {
 
-	return $html.scrollHeight;
+	return $html ? $html.scrollHeight : 0;
 
 }
