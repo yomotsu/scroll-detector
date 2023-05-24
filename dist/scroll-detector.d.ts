@@ -1,12 +1,11 @@
 import EventEmitter from './EventEmitter';
-declare class ScrollDetector extends EventEmitter {
+export default class ScrollDetector extends EventEmitter {
     mute: () => void;
     unmute: () => void;
     getScrollTop: () => number;
     getScrollProgress: () => number;
     isPageTop: () => boolean;
     isPageBottom: () => boolean;
+    destroy: () => void;
     constructor();
 }
-declare const _default: ScrollDetector;
-export default _default;

@@ -22,7 +22,7 @@ interface ScrollDetectorState {
 	throttleDeferTimer: number,
 }
 
-class ScrollDetector extends EventEmitter {
+export default class ScrollDetector extends EventEmitter {
 
 	mute: () => void;
 	unmute: () => void;
@@ -30,6 +30,7 @@ class ScrollDetector extends EventEmitter {
 	getScrollProgress: () => number;
 	isPageTop: () => boolean;
 	isPageBottom: () => boolean;
+	destroy: () => void;
 
 	constructor() {
 
@@ -78,6 +79,7 @@ class ScrollDetector extends EventEmitter {
 
 			state.scrollY = getScrollY();
 			state.scrollProgress = $html ? state.scrollY / ( getPageHeight() - $html.clientHeight ) : 0;
+			const deltaScrollY = state.lastScrollY !== null ? state.lastScrollY - state.scrollY : 0;
 
 			// ページ表示後に初めて、自動で発生するスクロール。
 			// ブラウザにより自動で引き起こされる。
@@ -85,7 +87,7 @@ class ScrollDetector extends EventEmitter {
 			if ( ! state.lastScrollY ) {
 
 				state.lastScrollY = state.scrollY;
-				this.emit( { type: 'scroll' } );
+				this.emit( { type: 'scroll', deltaScrollY } );
 				return;
 
 			}
@@ -140,13 +142,13 @@ class ScrollDetector extends EventEmitter {
 
 			}
 
-			this.emit( { type: 'scroll' } );
+			this.emit( { type: 'scroll', deltaScrollY } );
 
 			if ( state.isPageTop ) {
 
 				if ( state.previousAt !== ENUM_AT_TOP ) {
 
-					this.emit( { type: 'at:top' } );
+					this.emit( { type: 'at:top', deltaScrollY } );
 					state.previousAt = ENUM_AT_TOP;
 
 				}
@@ -160,7 +162,7 @@ class ScrollDetector extends EventEmitter {
 
 				if ( state.previousAt !== ENUM_AT_BOTTOM ) {
 
-					this.emit( { type: 'at:bottom' } );
+					this.emit( { type: 'at:bottom', deltaScrollY } );
 					state.previousAt = ENUM_AT_BOTTOM;
 
 				}
@@ -192,23 +194,28 @@ class ScrollDetector extends EventEmitter {
 
 			if ( isDirectionChanged ) {
 
-				if (   state.isUpScroll ) this.emit( { type: 'change:up' } );
-				if ( ! state.isUpScroll ) this.emit( { type: 'change:down' } );
+				if (   state.isUpScroll ) this.emit( { type: 'change:up', deltaScrollY } );
+				if ( ! state.isUpScroll ) this.emit( { type: 'change:down', deltaScrollY } );
 
 			}
 
-			if (   state.isUpScroll ) this.emit( { type: 'scroll:up' } );
-			if ( ! state.isUpScroll ) this.emit( { type: 'scroll:down' } );
+			if (   state.isUpScroll ) this.emit( { type: 'scroll:up', deltaScrollY } );
+			if ( ! state.isUpScroll ) this.emit( { type: 'scroll:down', deltaScrollY } );
 
 		};
 
 		isBrowser && window.addEventListener( 'scroll', onScroll, { passive: true } );
 
+
+		this.destroy = () => {
+
+			isBrowser && window.removeEventListener( 'scroll', onScroll, { passive: true } as EventListenerOptions );
+
+		}
+
 	}
 
 }
-
-export default new ScrollDetector();
 
 function getScrollY(): number {
 

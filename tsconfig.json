@@ -3,8 +3,8 @@
     "baseUrl": "src",
     "outDir": "./dist",
     "declaration": true,
-    "declarationDir": "./dist",
-    "target": "es5",
+    "target": "es2017",
+    "lib": ["es2017", "dom"],
     "strict": true,
     "removeComments": true,
     "experimentalDecorators": true,
@@ -15,7 +15,7 @@
     "noUnusedParameters": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

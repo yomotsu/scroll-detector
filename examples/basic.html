@@ -29,13 +29,14 @@
 
 <script src="../dist/scroll-detector.js"></script>
 <script>
-scrollDetector.on( 'scroll',      function () { console.log( 'scroll' ) } );
-scrollDetector.on( 'scroll:up',   function () { console.log( 'scroll:up' ) } );
-scrollDetector.on( 'scroll:down', function () { console.log( 'scroll:down' ) } );
-scrollDetector.on( 'change:up',   function () { console.log( 'change:up' ) } );
-scrollDetector.on( 'change:down', function () { console.log( 'change:down' ) } );
-scrollDetector.on( 'at:top',      function () { console.log( 'at:top' ) } );
-scrollDetector.on( 'at:bottom',   function () { console.log( 'at:bottom' ) } );
+const scrollDetector = new ScrollDetector();
+scrollDetector.on( 'scroll',      ( { deltaScrollY } ) => { console.log( 'scroll', { deltaScrollY } ) } );
+scrollDetector.on( 'scroll:up',   ( { deltaScrollY } ) => { console.log( 'scroll:up', { deltaScrollY } ) } );
+scrollDetector.on( 'scroll:down', ( { deltaScrollY } ) => { console.log( 'scroll:down', { deltaScrollY } ) } );
+scrollDetector.on( 'change:up',   ( { deltaScrollY } ) => { console.log( 'change:up', { deltaScrollY } ) } );
+scrollDetector.on( 'change:down', ( { deltaScrollY } ) => { console.log( 'change:down', { deltaScrollY } ) } );
+scrollDetector.on( 'at:top',      ( { deltaScrollY } ) => { console.log( 'at:top', { deltaScrollY } ) } );
+scrollDetector.on( 'at:bottom',   ( { deltaScrollY } ) => { console.log( 'at:bottom', { deltaScrollY } ) } );
 
 </script>
 
