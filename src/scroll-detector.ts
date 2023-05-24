@@ -79,7 +79,7 @@ export default class ScrollDetector extends EventEmitter {
 
 			state.scrollY = getScrollY();
 			state.scrollProgress = $html ? state.scrollY / ( getPageHeight() - $html.clientHeight ) : 0;
-			const deltaScrollY = state.lastScrollY !== null ? state.lastScrollY - state.scrollY : 0;
+			const deltaScrollY = state.lastScrollY !== null ? state.scrollY - state.lastScrollY : 0;
 
 			// ページ表示後に初めて、自動で発生するスクロール。
 			// ブラウザにより自動で引き起こされる。

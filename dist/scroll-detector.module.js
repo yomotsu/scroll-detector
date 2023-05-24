@@ -80,7 +80,7 @@ class ScrollDetector extends EventEmitter {
                 return;
             state.scrollY = getScrollY();
             state.scrollProgress = $html ? state.scrollY / (getPageHeight() - $html.clientHeight) : 0;
-            const deltaScrollY = state.lastScrollY !== null ? state.lastScrollY - state.scrollY : 0;
+            const deltaScrollY = state.lastScrollY !== null ? state.scrollY - state.lastScrollY : 0;
             if (!state.lastScrollY) {
                 state.lastScrollY = state.scrollY;
                 this.emit({ type: 'scroll', deltaScrollY });
